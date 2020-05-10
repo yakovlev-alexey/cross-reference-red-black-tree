@@ -516,5 +516,4 @@ namespace details
 
 }
 
-
 #endif
