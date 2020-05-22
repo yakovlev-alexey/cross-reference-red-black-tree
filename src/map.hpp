@@ -213,8 +213,8 @@ class Map<K, V, Comparator>::const_iterator
 template <typename K, typename V, typename Comparator>
 struct Map<K, V, Comparator>::MapImpl
 {
-  details::node_ptr<K, V> root_;
-  Comparator cmp_;
+  details::node_ptr<K, V> root;
+  Comparator cmp;
 };
 
 
@@ -225,14 +225,14 @@ Map<K, V, Comparator>::Map(const Comparator & cmp) : impl_{ nullptr, cmp }
 template <typename K, typename V, typename Comparator>
 Map<K, V, Comparator>::Map(Map && other) noexcept : impl_{ other.impl_ }
 {
-  other.impl_.root_ = nullptr;
+  other.impl_.root = nullptr;
 }
 
 template <typename K, typename V, typename Comparator>
 Map<K, V, Comparator> & Map<K, V, Comparator>::operator=(Map && other) noexcept
 {
   impl_ = other.impl_;
-  other.impl_.root_ = nullptr;
+  other.impl_.root = nullptr;
   return *this;
 }
 
@@ -245,8 +245,8 @@ namespace details
 template <typename K, typename V, typename Comparator>
 Map<K, V, Comparator>::~Map()
 {
-  if (impl_.root_) {
-    details::recursive_delete(impl_.root_);
+  if (impl_.root) {
+    details::recursive_delete(impl_.root);
   }
 }
 
@@ -259,25 +259,28 @@ namespace details
 template <typename K, typename V, typename Comparator>
 void Map<K, V, Comparator>::insert(const K & key, const V & value)
 {
-  auto current = impl_.root_;
+  auto current = impl_.root;
   auto prev = details::node_ptr<K, V>{ nullptr };
   while (current && (current->key != key)) {
     prev = current;
-    current = impl_.cmp_(current->key, key) ? current->right : current->left;
+    current = impl_.cmp(current->key, key) ? current->right : current->left;
   }
   if (current) {
     current->value = value;
     return;
   }
   current = new details::node_t<K, V>{ key, value, details::RED, prev, nullptr, nullptr };
-  if (!impl_.root_) {
-    impl_.root_ = current;
-  } else if (impl_.cmp_(prev->key, key)) {
+  if (!impl_.root) {
+    impl_.root = current;
+  } else if (impl_.cmp(prev->key, key)) {
     prev->right = current;
   } else {
     prev->left = current;
   }
   details::insert_node(current);
+  while (impl_.root->parent) {
+    impl_.root = impl_.root->parent;
+  }
 }
 
 namespace details
@@ -290,13 +293,13 @@ namespace details
 template <typename K, typename V, typename Comparator>
 bool Map<K, V, Comparator>::contains(const K & key)
 {
-  return details::find(key, impl_.root_, impl_.cmp_);
+  return details::find(key, impl_.root, impl_.cmp);
 }
 
 template <typename K, typename V, typename Comparator>
 V & Map<K, V, Comparator>::operator[](const K & key)
 {
-  auto node = details::find(key, impl_.root_, impl_.cmp_);
+  auto node = details::find(key, impl_.root, impl_.cmp);
   if (node) {
     return node->value;
   }
@@ -306,7 +309,7 @@ V & Map<K, V, Comparator>::operator[](const K & key)
 template <typename K, typename V, typename Comparator>
 const V & Map<K, V, Comparator>::operator[](const K & key) const
 {
-  auto node = details::find(key, impl_.root_, impl_.cmp_);
+  auto node = details::find(key, impl_.root, impl_.cmp);
   if (node) {
     return node->value;
   }
@@ -316,7 +319,7 @@ const V & Map<K, V, Comparator>::operator[](const K & key) const
 template <typename K, typename V, typename Comparator>
 typename Map<K, V, Comparator>::iterator Map<K, V, Comparator>::begin()
 {
-  auto c = impl_.root_;
+  auto c = impl_.root;
   while (c->left) {
     c = c->left;
   }
@@ -332,7 +335,7 @@ typename Map<K, V, Comparator>::iterator Map<K, V, Comparator>::end()
 template <typename K, typename V, typename Comparator>
 typename Map<K, V, Comparator>::const_iterator Map<K, V, Comparator>::begin() const
 {
-  auto c = impl_.root_;
+  auto c = impl_.root;
   while (c->left) {
     c = c->left;
   }

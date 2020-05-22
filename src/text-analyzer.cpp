@@ -53,8 +53,8 @@ void TextAnalyzer::analyze(std::istream & is)
 
     std::getline(is, line, '\n');
 
-    auto words_begin = std::sregex_iterator(line.begin(), line.end(), word_regex);
-    auto words_end = std::sregex_iterator();
+    auto words_begin = std::sregex_iterator{ line.begin(), line.end(), word_regex };
+    auto words_end = std::sregex_iterator{ };
 
     for (auto itr = words_begin; itr != words_end; ++itr) {
       auto word = itr->str();
