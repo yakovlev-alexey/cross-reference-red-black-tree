@@ -1,26 +1,73 @@
-#include <iostream>
 #include <string>
-#include <list>
-#include "map.hpp"
+#include <limits>
+#include <iostream>
+#include <stdexcept>
+#include "text-analyzer.hpp"
 
-void output(const Map<std::string, std::list<int>> & map)
+void analyzeText(const std::string & inFilename);
+
+void enumerateText(const std::string & inFilename);
+
+int main(int, char * [])
 {
-  for (Map<std::string, std::list<int>>::const_iterator itr = map.begin(); itr != map.end(); ++itr) {
-    std::cout << '\n' << itr.key() << '\n';
-    std::for_each(itr.value().begin(), itr.value().end(), [] (int e) { std::cout << e << ' '; });
+  std::cout << "Enter 1 to analyze a text file, enter 2 to enumerate lines in a text file:\n";
+  char ch = 0;
+  while (std::cin && (ch != '1') && (ch != '2')) {
+    std::cin >> ch;
+  }
+  if (!std::cin) {
+    std::cerr << "Unknown error reading input\n";
+    return 1;
+  }
+  std::cin.ignore(std::numeric_limits<int>::max(), '\n');
+
+  std::cout << "Enter text file name including extension (e.g. input.txt):\n";
+  auto inFilename = std::string{};
+  std::cin >> inFilename;
+  if (!std::cin) {
+    std::cerr << "Unknown error reading input\n";
+    return 1;
+  }
+
+  try {
+    if (ch == '1') {
+      analyzeText(inFilename);
+    } else {
+      enumerateText(inFilename);
+    }
+  } catch (const std::invalid_argument & exc) {
+    std::cerr << exc.what() << '\n';
+    return 1;
+  }
+
+  return 0;
+}
+
+void analyzeText(const std::string & inFilename)
+{
+  TextAnalyzer textAnalyzer{ };
+  textAnalyzer.analyze(inFilename);
+  std::cout << "Enter 1 to output analysis to terminal "
+            << "or enter output file name including extension: \n";
+  auto outFilename = std::string{};
+  std::cin >> outFilename;
+  if (!std::cin) {
+    throw std::invalid_argument{ "Unknown error reading input" };
+  }
+  if (outFilename == "1") {
+    textAnalyzer.printAnalysis(std::cout);
+  } else {
+    textAnalyzer.printAnalysis(outFilename);
   }
 }
 
-int main(int, char *[])
+void enumerateText(const std::string & inFilename)
 {
-  Map<std::string, std::list<int>> map{};
-  map.insert("e", std::list<int>{ 1, 3 });
-  map.insert("b", std::list<int>{ 3, 5 });
-  map.insert("g", std::list<int>{ 3, 5 });
-  map.insert("b", std::list<int>{ 3, 5 });
-  map.insert("v", std::list<int>{ 3, 5 });
-  map.insert("f", std::list<int>{ 3, 5 });
-  map.insert("z", std::list<int>{ 3, 5 });
-  output(map);
-  return 0;
+  std::cout << "Enter output text file name including extension:\n";
+  auto outFilename = std::string{};
+  std::cin >> outFilename;
+  if (!std::cin) {
+    throw std::invalid_argument{ "Unknown error reading input" };
+  }
+  TextAnalyzer::enumerateLines(inFilename, outFilename);
 }

@@ -1,8 +1,8 @@
 #include "text-analyzer.hpp"
 
 #include <list>
-#include <string>
 #include <regex>
+#include <string>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -10,8 +10,19 @@
 
 #include "map.hpp"
 
-TextAnalyzer::TextAnalyzer() : dictionary_{ }
+TextAnalyzer::TextAnalyzer() :
+    dictionary_{ }
 { }
+
+TextAnalyzer::TextAnalyzer(TextAnalyzer && other) noexcept:
+    dictionary_{ std::move(other.dictionary_) }
+{ }
+
+TextAnalyzer & TextAnalyzer::operator=(TextAnalyzer && other) noexcept
+{
+  dictionary_ = std::move(other.dictionary_);
+  return *this;
+}
 
 const Map<std::string, std::list<int>> & TextAnalyzer::getDictionary() const
 {
@@ -21,7 +32,7 @@ const Map<std::string, std::list<int>> & TextAnalyzer::getDictionary() const
 void TextAnalyzer::analyze(const std::string & filename)
 {
   dictionary_ = Map<std::string, std::list<int>>{ };
-  std::ifstream is{ filename };
+  auto is = std::ifstream{ filename };
   if (!is) {
     throw std::invalid_argument{ "Can't open file " + filename };
   }
@@ -35,19 +46,20 @@ void TextAnalyzer::analyze(std::istream & is)
 {
   dictionary_ = Map<std::string, std::list<int>>{ };
 
-  std::regex word_regex{ "(\\w+)" };
-  std::string line;
+  auto word_regex = std::regex{ "(\\w+)" };
+  auto line = std::string{ };
 
   for (int i = 1; is; ++i) {
+
     std::getline(is, line, '\n');
+
     auto words_begin = std::sregex_iterator(line.begin(), line.end(), word_regex);
     auto words_end = std::sregex_iterator();
+
     for (auto itr = words_begin; itr != words_end; ++itr) {
       auto word = itr->str();
-      std::transform(word.begin(), word.end(), word.begin(), [ ](char c)
-      {
-        return std::tolower(c);
-      });
+      std::transform(word.begin(), word.end(), word.begin(),
+          [ ] (char c) { return std::tolower(c); });
 
       if (dictionary_.contains(word)) {
         dictionary_[word].push_back(i);
@@ -56,6 +68,7 @@ void TextAnalyzer::analyze(std::istream & is)
       }
     }
   }
+
 }
 
 void TextAnalyzer::enumerateLines(const std::string & inFilename, const std::string & outFileName)
@@ -65,11 +78,12 @@ void TextAnalyzer::enumerateLines(const std::string & inFilename, const std::str
         "Can't output enumerated text to the file with the same name " + inFilename };
   }
 
-  std::ifstream is{ inFilename };
+  auto is = std::ifstream{ inFilename };
   if (!is) {
     throw std::invalid_argument{ "Can't open file " + inFilename };
   }
-  std::ofstream os{ outFileName };
+
+  auto os = std::ofstream{ outFileName };
   if (!os) {
     is.close();
     throw std::invalid_argument{ "Can't create output file " + outFileName };
@@ -83,17 +97,19 @@ void TextAnalyzer::enumerateLines(const std::string & inFilename, const std::str
 
 void TextAnalyzer::enumerateLines(std::istream & is, std::ostream & os)
 {
-  std::string line;
+  auto line = std::string{ };
 
-  for (int i = 1; is; ++i) {
+  for (int i = 1; is;) {
     std::getline(is, line, '\n');
-    os << i << ") " << line << '\n';
+    if (!line.empty()) {
+      os << i++ << ") " << line << '\n';
+    }
   }
 }
 
 void TextAnalyzer::printAnalysis(const std::string & filename)
 {
-  std::ofstream os{ filename };
+  auto os = std::ofstream{ filename };
   if (!os) {
     throw std::invalid_argument{ "Can't create output file " + filename };
   }

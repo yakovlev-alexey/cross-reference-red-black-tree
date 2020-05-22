@@ -14,6 +14,16 @@ class TextAnalyzer
 
     TextAnalyzer();
 
+    TextAnalyzer(const TextAnalyzer & other) = delete;
+
+    TextAnalyzer(TextAnalyzer && other) noexcept;
+
+    ~TextAnalyzer() = default;
+
+    TextAnalyzer & operator=(const TextAnalyzer & other) = delete;
+
+    TextAnalyzer & operator=(TextAnalyzer && other) noexcept;
+
     const Map<std::string, std::list<int>> & getDictionary() const;
 
     void analyze(const std::string & filename);

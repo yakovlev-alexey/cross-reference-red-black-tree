@@ -15,13 +15,19 @@ class Map
 
     explicit Map(const Comparator & cmp = Comparator());
 
-    ~Map();
+    Map(const Map & other) = delete;
 
-    bool contains(const K & key);
+    Map(Map && other) noexcept;
+
+    Map & operator=(const Map & other) = delete;
+
+    Map & operator=(Map && other) noexcept;
+
+    ~Map();
 
     void insert(const K & key, const V & value);
 
-    void remove(const K & key);
+    bool contains(const K & key);
 
     V & operator[](const K & key);
 
@@ -42,9 +48,6 @@ class Map
     MapImpl impl_;
 
 };
-
-
-
 
 
 namespace details
@@ -210,14 +213,28 @@ class Map<K, V, Comparator>::const_iterator
 template <typename K, typename V, typename Comparator>
 struct Map<K, V, Comparator>::MapImpl
 {
-    details::node_ptr<K, V> root_;
-    Comparator cmp_;
+  details::node_ptr<K, V> root_;
+  Comparator cmp_;
 };
 
 
 template <typename K, typename V, typename Comparator>
 Map<K, V, Comparator>::Map(const Comparator & cmp) : impl_{ nullptr, cmp }
 { }
+
+template <typename K, typename V, typename Comparator>
+Map<K, V, Comparator>::Map(Map && other) noexcept : impl_{ other.impl_ }
+{
+  other.impl_.root_ = nullptr;
+}
+
+template <typename K, typename V, typename Comparator>
+Map<K, V, Comparator> & Map<K, V, Comparator>::operator=(Map && other) noexcept
+{
+  impl_ = other.impl_;
+  other.impl_.root_ = nullptr;
+  return *this;
+}
 
 namespace details
 {
@@ -233,12 +250,6 @@ Map<K, V, Comparator>::~Map()
   }
 }
 
-template <typename K, typename V, typename Comparator>
-bool Map<K, V, Comparator>::contains(const K & key)
-{
-  return find(key);
-}
-
 namespace details
 {
   template <typename K, typename V>
@@ -249,7 +260,7 @@ template <typename K, typename V, typename Comparator>
 void Map<K, V, Comparator>::insert(const K & key, const V & value)
 {
   auto current = impl_.root_;
-  details::node_ptr<K, V> prev{ nullptr };
+  auto prev = details::node_ptr<K, V>{ nullptr };
   while (current && (current->key != key)) {
     prev = current;
     current = impl_.cmp_(current->key, key) ? current->right : current->left;
@@ -269,21 +280,17 @@ void Map<K, V, Comparator>::insert(const K & key, const V & value)
   details::insert_node(current);
 }
 
-template <typename K, typename V, typename Comparator>
-void Map<K, V, Comparator>::remove(const K & key)
-{
-//  auto del = find(key);
-//  if (!del) {
-//    return;
-//  }
-//
-//  delete_case_1();
-}
-
 namespace details
 {
   template <typename K, typename V, typename Comparator>
-  details::node_ptr<K, V> find(const K & key, details::node_ptr<K, V> root, const Comparator & cmp = Comparator{});
+  details::node_ptr<K, V>
+  find(const K & key, details::node_ptr<K, V> root, const Comparator & cmp = Comparator{ });
+}
+
+template <typename K, typename V, typename Comparator>
+bool Map<K, V, Comparator>::contains(const K & key)
+{
+  return details::find(key, impl_.root_, impl_.cmp_);
 }
 
 template <typename K, typename V, typename Comparator>
@@ -325,7 +332,7 @@ typename Map<K, V, Comparator>::iterator Map<K, V, Comparator>::end()
 template <typename K, typename V, typename Comparator>
 typename Map<K, V, Comparator>::const_iterator Map<K, V, Comparator>::begin() const
 {
-  details::const_node_ptr<K, V> c = impl_.root_;
+  auto c = impl_.root_;
   while (c->left) {
     c = c->left;
   }
@@ -364,7 +371,7 @@ namespace details
   }
 
   template <typename K, typename V>
-  void insert_case_1(details::node_ptr<K, V> node);
+  void insert_case_1(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
   void insert_node(details::node_ptr<K, V> node)
@@ -373,145 +380,156 @@ namespace details
   }
 
   template <typename K, typename V>
-  void insert_case_2(details::node_ptr<K, V> node);
+  void insert_case_2(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  void insert_case_1(details::node_ptr<K, V> node)
+  void insert_case_1(details::node_ptr<K, V> n)
   {
-    if (!node->parent) {
-      node->color = BLACK;
+    if (!n->parent) {
+      n->color = BLACK;
     } else {
-      insert_case_2(node);
+      insert_case_2(n);
     }
   }
 
   template <typename K, typename V>
-  void insert_case_3(details::node_ptr<K, V> node);
+  void insert_case_3(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  void insert_case_2(details::node_ptr<K, V> node)
+  void insert_case_2(details::node_ptr<K, V> n)
   {
-    if (node->parent->color != BLACK) {
-      insert_case_3(node);
+    if (n->parent->color != BLACK) {
+      insert_case_3(n);
     }
   }
 
   template <typename K, typename V>
-  details::node_ptr<K, V> grandparent(details::node_ptr<K, V> node);
+  details::node_ptr<K, V> grandparent(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  details::node_ptr<K, V> uncle(details::node_ptr<K, V> node);
+  details::node_ptr<K, V> uncle(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  void insert_case_4(details::node_ptr<K, V> node);
+  void insert_case_4(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  void insert_case_3(details::node_ptr<K, V> node)
+  void insert_case_3(details::node_ptr<K, V> n)
   {
-    auto unc = uncle(node);
-    if (unc && (unc->color == RED)) {
-      node->parent->color = BLACK;
-      unc->color = BLACK;
-      auto gp = grandparent(node);
+    auto u = uncle(n);
+    if (u && (u->color == RED)) {
+      n->parent->color = BLACK;
+      u->color = BLACK;
+      auto gp = grandparent(n);
       gp->color = RED;
       insert_case_1(gp);
     } else {
-      insert_case_4(node);
+      insert_case_4(n);
     }
   }
 
   template <typename K, typename V>
-  void rotate_left(details::node_ptr<K, V> node);
+  void rotate_left(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  void rotate_right(details::node_ptr<K, V> node);
+  void rotate_right(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  void insert_case_5(details::node_ptr<K, V> node);
+  void insert_case_5(details::node_ptr<K, V> n);
 
   template <typename K, typename V>
-  void insert_case_4(details::node_ptr<K, V> node)
+  void insert_case_4(details::node_ptr<K, V> n)
   {
-    auto parent = node->parent;
-    auto gp = grandparent(node);
-    if ((node == node->parent->right) && (node->parent == gp->left)) {
-      rotate_left(node->parent);
-      node = node->left;
-    } else if ((node == node->parent->left) && (node->parent == gp->right)) {
-      rotate_right(node->parent);
-      node = node->right;
+    auto p = n->parent;
+    auto gp = grandparent(n);
+    if ((n == p->right) && (p == gp->left)) {
+      rotate_left(p);
+      n = n->left;
+    } else if ((n == p->left) && (p == gp->right)) {
+      rotate_right(p);
+      n = n->right;
     }
-    insert_case_5(node);
+    insert_case_5(n);
   }
 
   template <typename K, typename V>
-  void insert_case_5(details::node_ptr<K, V> node)
+  void insert_case_5(details::node_ptr<K, V> n)
   {
-    auto gp = grandparent(node);
-    node->parent->color = BLACK;
-    gp->color = RED;
-    if ((node == node->parent->left) && (node->parent == gp->left)) {
+    auto p = n->parent;
+    auto gp = grandparent(n);
+
+    if ((n == p->left) && (p == gp->left)) {
       rotate_right(gp);
     } else {
       rotate_left(gp);
     }
+
+    p->color = BLACK;
+    gp->color = RED;
   }
 
   template <typename K, typename V>
-  details::node_ptr<K, V> grandparent(details::node_ptr<K, V> node)
+  details::node_ptr<K, V> grandparent(details::node_ptr<K, V> n)
   {
-    return (node && node->parent) ? node->parent->parent : nullptr;
+    return (n && n->parent) ? n->parent->parent : nullptr;
   }
 
   template <typename K, typename V>
-  details::node_ptr<K, V> uncle(details::node_ptr<K, V> node)
+  details::node_ptr<K, V> uncle(details::node_ptr<K, V> n)
   {
-    auto gp = grandparent(node);
+    auto gp = grandparent(n);
     return gp ?
-           (gp->left == node->parent) ? gp->right : gp->left
-              : nullptr;
+        (gp->left == n->parent) ? gp->right : gp->left
+        : nullptr;
   }
 
   template <typename K, typename V>
-  void rotate_left(details::node_ptr<K, V> node)
+  void rotate_left(details::node_ptr<K, V> n)
   {
-    auto pivot = node->right;
-    auto parent = node->parent;
-    pivot->parent = parent;
-    if (parent) {
-      if (parent->left == node) {
-        parent->left = pivot;
+    auto pivot = n->right;
+    auto p = n->parent;
+
+    n->right = pivot->left;
+    pivot->left = n;
+    n->parent = pivot;
+
+    if (n->right) {
+      n->right->parent = n;
+    }
+
+    if (p) {
+      if (p->left == n) {
+        p->left = pivot;
       } else {
-        parent->right = pivot;
+        p->right = pivot;
       }
     }
-    node->right = pivot->left;
-    if (pivot->left) {
-      pivot->left->parent = node;
-    }
-    node->parent = pivot;
-    pivot->left = node;
+
+    pivot->parent = p;
   }
 
   template <typename K, typename V>
-  void rotate_right(details::node_ptr<K, V> node)
+  void rotate_right(details::node_ptr<K, V> n)
   {
-    auto pivot = node->left;
-    auto parent = node->parent;
-    pivot->parent = parent;
-    if (parent) {
-      if (parent->left == node) {
-        parent->left = pivot;
+    auto pivot = n->left;
+    auto p = n->parent;
+
+    n->left = pivot->right;
+    pivot->right = n;
+    n->parent = pivot;
+
+    if (n->left) {
+      n->left->parent = n;
+    }
+
+    if (p) {
+      if (p->left == n) {
+        p->left = pivot;
       } else {
-        parent->right = pivot;
+        p->right = pivot;
       }
     }
-    node->left = pivot->right;
-    if (pivot->right) {
-      pivot->right->parent = node;
-    }
-    node->parent = pivot;
-    pivot->right = node;
+
+    pivot->parent = p;
   }
 
 }
