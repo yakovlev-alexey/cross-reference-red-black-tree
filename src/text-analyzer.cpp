@@ -99,11 +99,9 @@ void TextAnalyzer::enumerateLines(std::istream & is, std::ostream & os)
 {
   auto line = std::string{ };
 
-  for (int i = 1; is;) {
+  for (int i = 1; is; ++i) {
     std::getline(is, line, '\n');
-    if (!line.empty()) {
-      os << i++ << ") " << line << '\n';
-    }
+    os << i << ") " << line << '\n';
   }
 }
 
