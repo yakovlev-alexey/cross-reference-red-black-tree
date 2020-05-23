@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include <stdexcept>
 #include <functional>
 
@@ -117,12 +118,36 @@ void TextAnalyzer::printAnalysis(const std::string & filename)
   os.close();
 }
 
+namespace
+{
+  std::string generateSpaces(size_t length);
+}
+
 void TextAnalyzer::printAnalysis(std::ostream & os)
 {
+  auto word = std::string{ "Word" };
+  auto colwidth = word.length();
   for (auto itr = dictionary.begin(); itr != dictionary.end(); ++itr) {
-    os << itr.key() << ':';
+    colwidth = std::max(itr.key().length(), colwidth);
+  }
+  const auto margin = size_t{ 2u };
+  os << "Word" << generateSpaces(colwidth - word.length() + margin) << "Lines\n"; 
+  for (auto itr = dictionary.begin(); itr != dictionary.end(); ++itr) {
+    os << itr.key() << generateSpaces(colwidth - itr.key().length() + margin);
     std::for_each(itr.value().begin(), itr.value().end(),
-        [&os] (int e) { os << ' ' << e; });
+        [&os] (int e) { os << e << ' '; });
     os << '\n';
+  }
+}
+
+namespace
+{
+  std::string generateSpaces(size_t length)
+  {
+    auto spaces = std::string{ };
+    for (size_t i = 0u; i < length; ++i) {
+      spaces += " ";
+    }
+    return spaces;
   }
 }
