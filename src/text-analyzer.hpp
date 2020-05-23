@@ -2,10 +2,10 @@
 #define CROSS_REFS_TEXT_ANALYZER
 
 #include <ios>
-#include <list>
 #include <string>
 
 #include "map.hpp"
+#include "list.hpp"
 
 class TextAnalyzer
 {
@@ -24,7 +24,7 @@ class TextAnalyzer
 
     TextAnalyzer & operator=(TextAnalyzer && other) noexcept;
 
-    const Map<std::string, std::list<int>> & getDictionary() const;
+    const Map<std::string, List<int>> & getDictionary() const;
 
     void analyze(const std::string & filename);
 
@@ -40,7 +40,7 @@ class TextAnalyzer
 
   private:
 
-    Map<std::string, std::list<int>> dictionary_;
+    Map<std::string, List<int>> dictionary;
 
 };
 

@@ -1,6 +1,5 @@
 #include "text-analyzer.hpp"
 
-#include <list>
 #include <regex>
 #include <string>
 #include <fstream>
@@ -8,30 +7,31 @@
 #include <stdexcept>
 #include <functional>
 
+#include "list.hpp"
 #include "map.hpp"
 
 TextAnalyzer::TextAnalyzer() :
-    dictionary_{ }
+    dictionary{ }
 { }
 
 TextAnalyzer::TextAnalyzer(TextAnalyzer && other) noexcept:
-    dictionary_{ std::move(other.dictionary_) }
+    dictionary{ std::move(other.dictionary) }
 { }
 
 TextAnalyzer & TextAnalyzer::operator=(TextAnalyzer && other) noexcept
 {
-  dictionary_ = std::move(other.dictionary_);
+  dictionary = std::move(other.dictionary);
   return *this;
 }
 
-const Map<std::string, std::list<int>> & TextAnalyzer::getDictionary() const
+const Map<std::string, List<int>> & TextAnalyzer::getDictionary() const
 {
-  return dictionary_;
+  return dictionary;
 }
 
 void TextAnalyzer::analyze(const std::string & filename)
 {
-  dictionary_ = Map<std::string, std::list<int>>{ };
+  dictionary = Map<std::string, List<int>>{ };
   auto is = std::ifstream{ filename };
   if (!is) {
     throw std::invalid_argument{ "Can't open file " + filename };
@@ -44,7 +44,7 @@ void TextAnalyzer::analyze(const std::string & filename)
 
 void TextAnalyzer::analyze(std::istream & is)
 {
-  dictionary_ = Map<std::string, std::list<int>>{ };
+  dictionary = Map<std::string, List<int>>{ };
 
   auto word_regex = std::regex{ "(\\w+)" };
   auto line = std::string{ };
@@ -59,12 +59,13 @@ void TextAnalyzer::analyze(std::istream & is)
     for (auto itr = words_begin; itr != words_end; ++itr) {
       auto word = itr->str();
       std::transform(word.begin(), word.end(), word.begin(),
-          [ ] (char c) { return std::tolower(c); });
+          [ ](char c)
+          { return std::tolower(c); });
 
-      if (dictionary_.contains(word)) {
-        dictionary_[word].push_back(i);
+      if (dictionary.contains(word)) {
+        dictionary[word].push_back(i);
       } else {
-        dictionary_.insert(word, { i });
+        dictionary.insert(word, { i });
       }
     }
   }
@@ -119,10 +120,11 @@ void TextAnalyzer::printAnalysis(const std::string & filename)
 
 void TextAnalyzer::printAnalysis(std::ostream & os)
 {
-  for (auto itr = dictionary_.begin(); itr != dictionary_.end(); ++itr) {
+  for (auto itr = dictionary.begin(); itr != dictionary.end(); ++itr) {
     os << itr.key() << ':';
     std::for_each(itr.value().begin(), itr.value().end(),
-        [&os] (int e) { os << ' ' << e; });
+        [&os](int e)
+        { os << ' ' << e; });
     os << '\n';
   }
 }

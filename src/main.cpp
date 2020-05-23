@@ -2,6 +2,7 @@
 #include <limits>
 #include <iostream>
 #include <stdexcept>
+
 #include "text-analyzer.hpp"
 
 void analyzeText(const std::string & inFilename);
