@@ -47,7 +47,7 @@ void TextAnalyzer::analyze(std::istream & is)
 {
   dictionary = Map<std::string, List<int>>{ };
 
-  auto word_regex = std::regex{ "(\\w+)" };
+  auto word_regex = std::regex{ "[a-zA-Z0-9]+" };
   auto line = std::string{ };
 
   for (int i = 1; is; ++i) {
