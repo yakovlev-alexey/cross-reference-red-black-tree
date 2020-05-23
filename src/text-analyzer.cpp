@@ -59,8 +59,7 @@ void TextAnalyzer::analyze(std::istream & is)
     for (auto itr = words_begin; itr != words_end; ++itr) {
       auto word = itr->str();
       std::transform(word.begin(), word.end(), word.begin(),
-          [ ](char c)
-          { return std::tolower(c); });
+          [ ] (char c) { return std::tolower(c); });
 
       if (dictionary.contains(word)) {
         dictionary[word].push_back(i);
@@ -123,8 +122,7 @@ void TextAnalyzer::printAnalysis(std::ostream & os)
   for (auto itr = dictionary.begin(); itr != dictionary.end(); ++itr) {
     os << itr.key() << ':';
     std::for_each(itr.value().begin(), itr.value().end(),
-        [&os](int e)
-        { os << ' ' << e; });
+        [&os] (int e) { os << ' ' << e; });
     os << '\n';
   }
 }
