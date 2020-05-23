@@ -253,6 +253,9 @@ void List<T>::push_back(const T & value)
     }
     tail = tail->next;
   }
+  if (tail->value == value) {
+      return;
+  }
   tail->next = new list_details::node_t<T>{ value, nullptr };
 }
 
