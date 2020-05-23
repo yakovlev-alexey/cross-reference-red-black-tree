@@ -160,24 +160,23 @@ template <typename T>
 struct List<T>::ListImpl
 {
   list_details::node_ptr<T> head;
-  list_details::node_ptr<T> tail;
 };
 
 template <typename T>
 List<T>::List() :
-    impl{ nullptr, nullptr }
+    impl{ nullptr }
 { }
 
 template <typename T>
 List<T>::List(const List & other) :
-    impl{ nullptr, nullptr }
+    impl{ nullptr }
 {
   if (!other.impl.head) {
     return;
   }
-  impl.head = impl.tail = new list_details::node_t<T>{ other.impl.head->value, nullptr };
+  auto tail = impl.head = new list_details::node_t<T>{ other.impl.head->value, nullptr };
   for (auto itr = other.impl.head->next; itr; itr = itr->next) {
-    impl.tail = impl.tail->next = new list_details::node_t<T>{ itr->value, nullptr };
+    tail = tail->next = new list_details::node_t<T>{ itr->value, nullptr };
   }
 }
 
@@ -185,17 +184,17 @@ template <typename T>
 List<T>::List(List && other) noexcept :
     impl{ other.impl }
 {
-  other.impl = { nullptr, nullptr };
+  other.impl = { nullptr };
 }
 
 template <typename T>
 List<T>::List(std::initializer_list<T> list) :
-    impl{ nullptr, nullptr }
+    impl{ nullptr }
 {
   auto itr = list.begin();
-  impl.head = impl.tail = new list_details::node_t<T>{ *itr, nullptr };
+  auto tail = impl.head = new list_details::node_t<T>{ *itr, nullptr };
   for (++itr; itr != list.end(); ++itr) {
-    impl.tail = impl.tail->next = new list_details::node_t<T>{ *itr, nullptr };
+    tail = tail->next = new list_details::node_t<T>{ *itr, nullptr };
   }
 }
 
@@ -208,7 +207,7 @@ namespace list_details
 template <typename T>
 List<T>::~List()
 {
-  if (!impl.head || !impl.tail) {
+  if (!impl.head) {
     return;
   }
   list_details::destructList(impl.head);
@@ -221,9 +220,9 @@ List<T> & List<T>::operator=(const List & other)
     return *this;
   }
   list_details::destructList(impl.head);
-  impl.head = impl.tail = new list_details::node_t<T>{ other.impl.head->value, nullptr };
+  auto tail = impl.head = new list_details::node_t<T>{ other.impl.head->value, nullptr };
   for (auto itr = other.impl.head->next; itr; itr = itr->next) {
-    impl.tail = impl.tail->next = new list_details::node_t<T>{ itr->value, nullptr };
+    tail = tail->next = new list_details::node_t<T>{ itr->value, nullptr };
   }
   return *this;
 }
@@ -233,14 +232,28 @@ List<T> & List<T>::operator=(List && other) noexcept
 {
   list_details::destructList(impl.head);
   impl = other.impl;
-  other.impl = { nullptr, nullptr };
+  other.impl = { nullptr };
   return *this;
 }
 
 template <typename T>
 void List<T>::push_back(const T & value)
 {
-  impl.tail = impl.tail->next = new list_details::node_t<T>{ value, nullptr };
+  if (!impl.head) {
+    impl.head = new list_details::node_t<T>{ value, nullptr };
+    return;
+  }
+  if (impl.head->value == value) {
+    return;
+  }
+  auto tail = impl.head;
+  while (tail->next) {
+    if (tail->value == value) {
+      return;
+    }
+    tail = tail->next;
+  }
+  tail->next = new list_details::node_t<T>{ value, nullptr };
 }
 
 template <typename T>
