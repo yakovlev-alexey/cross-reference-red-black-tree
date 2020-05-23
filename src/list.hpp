@@ -52,17 +52,20 @@ class List
 namespace list_details
 {
   template <typename T>
-  struct node_t
-  {
-    T value;
-    node_t * next;
-  };
+  struct node_t;
 
   template <typename T>
   using node_ptr = node_t<T> *;
 
   template <typename T>
   using const_node_ptr = node_t<const T> *;
+
+  template <typename T>
+  struct node_t
+  {
+    T value;
+    node_ptr<T> next;
+  };
 }
 
 template <typename T>
